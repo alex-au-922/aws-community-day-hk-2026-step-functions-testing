@@ -1,0 +1,305 @@
+{
+  "test_function_name": "test_merchant_deadline_cancels_without_charging[1]",
+  "execution": "arn:aws:states:ap-east-1:000000000000:execution:create-12f06922ea4941618e47b5df86f35cb7:60be8460-6afe-4a0c-9fc5-941ac2fe84a3",
+  "result": {
+    "executionArn": "arn:aws:states:ap-east-1:000000000000:execution:create-12f06922ea4941618e47b5df86f35cb7:60be8460-6afe-4a0c-9fc5-941ac2fe84a3",
+    "stateMachineArn": "arn:aws:states:ap-east-1:000000000000:stateMachine:create-12f06922ea4941618e47b5df86f35cb7",
+    "name": "60be8460-6afe-4a0c-9fc5-941ac2fe84a3",
+    "status": "SUCCEEDED",
+    "startDate": "2026-10-24 01:45:47.287000+08:00",
+    "stopDate": "2026-10-24 01:45:49.127000+08:00",
+    "input": "{\"order_id\": \"order-001\", \"sku\": \"product-001\", \"quantity\": 2, \"amount_minor\": 12500, \"currency\": \"HKD\", \"payment_method_id\": \"pm_card_visa\"}",
+    "output": "{\"order_id\":\"order-001\",\"sku\":\"product-001\",\"quantity\":2,\"amount_minor\":12500,\"currency\":\"HKD\",\"status\":\"CANCELLED\"}",
+    "ResponseMetadata": {
+      "RequestId": "916b6acb-1049-4de0-b240-e0b74501d87d",
+      "HTTPStatusCode": 200,
+      "HTTPHeaders": {
+        "content-type": "application/x-amz-json-1.0;charset=UTF-8",
+        "content-length": "698",
+        "date": "Fri, 23 Oct 2026 17:45:49 GMT",
+        "x-amz-id-2": "916b6acb-1049-4de0-b240-e0b74501d87d",
+        "x-amz-request-id": "916b6acb-1049-4de0-b240-e0b74501d87d",
+        "x-amzn-requestid": "916b6acb-1049-4de0-b240-e0b74501d87d"
+      },
+      "RetryAttempts": 0
+    }
+  },
+  "history": [
+    {
+      "timestamp": "2026-10-24 01:45:47.287000+08:00",
+      "type": "ExecutionStarted",
+      "id": 1,
+      "previousEventId": 0,
+      "executionStartedEventDetails": {
+        "input": "{\"order_id\": \"order-001\", \"sku\": \"product-001\", \"quantity\": 2, \"amount_minor\": 12500, \"currency\": \"HKD\", \"payment_method_id\": \"pm_card_visa\"}",
+        "inputDetails": {
+          "truncated": false
+        },
+        "roleArn": "arn:aws:iam::000000000000:role/order-demo"
+      }
+    },
+    {
+      "timestamp": "2026-10-24 01:45:47.287000+08:00",
+      "type": "TaskStateEntered",
+      "id": 2,
+      "previousEventId": 0,
+      "stateEnteredEventDetails": {
+        "name": "CreateOrder",
+        "input": "{\"order_id\":\"order-001\",\"sku\":\"product-001\",\"quantity\":2,\"amount_minor\":12500,\"currency\":\"HKD\",\"payment_method_id\":\"pm_card_visa\"}",
+        "inputDetails": {
+          "truncated": false
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-24 01:45:47.287000+08:00",
+      "type": "LambdaFunctionScheduled",
+      "id": 3,
+      "previousEventId": 2,
+      "lambdaFunctionScheduledEventDetails": {
+        "resource": "arn:aws:lambda:ap-east-1:000000000000:function:orders-1844416e69114dde99c4d7c8eaf819e8",
+        "input": "{\"action\":\"create_order\",\"order_id\":\"order-001\",\"sku\":\"product-001\",\"quantity\":2,\"amount_minor\":12500,\"currency\":\"HKD\"}",
+        "inputDetails": {
+          "truncated": false
+        },
+        "timeoutInSeconds": 30
+      }
+    },
+    {
+      "timestamp": "2026-10-24 01:45:47.287000+08:00",
+      "type": "LambdaFunctionStarted",
+      "id": 4,
+      "previousEventId": 3
+    },
+    {
+      "timestamp": "2026-10-24 01:45:48.069000+08:00",
+      "type": "LambdaFunctionSucceeded",
+      "id": 5,
+      "previousEventId": 4,
+      "lambdaFunctionSucceededEventDetails": {
+        "output": "{\"order_id\":\"order-001\",\"sku\":\"product-001\",\"quantity\":2,\"amount_minor\":12500,\"currency\":\"HKD\",\"status\":\"PENDING\"}",
+        "outputDetails": {
+          "truncated": false
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-24 01:45:48.069000+08:00",
+      "type": "TaskStateExited",
+      "id": 6,
+      "previousEventId": 5,
+      "stateExitedEventDetails": {
+        "name": "CreateOrder",
+        "output": "{\"order_id\":\"order-001\",\"sku\":\"product-001\",\"quantity\":2,\"amount_minor\":12500,\"currency\":\"HKD\",\"payment_method_id\":\"pm_card_visa\",\"order\":{\"order_id\":\"order-001\",\"sku\":\"product-001\",\"quantity\":2,\"amount_minor\":12500,\"currency\":\"HKD\",\"status\":\"PENDING\"}}",
+        "outputDetails": {
+          "truncated": false
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-24 01:45:48.069000+08:00",
+      "type": "ChoiceStateEntered",
+      "id": 7,
+      "previousEventId": 6,
+      "stateEnteredEventDetails": {
+        "name": "IsNewOrder",
+        "input": "{\"order_id\":\"order-001\",\"sku\":\"product-001\",\"quantity\":2,\"amount_minor\":12500,\"currency\":\"HKD\",\"payment_method_id\":\"pm_card_visa\",\"order\":{\"order_id\":\"order-001\",\"sku\":\"product-001\",\"quantity\":2,\"amount_minor\":12500,\"currency\":\"HKD\",\"status\":\"PENDING\"}}",
+        "inputDetails": {
+          "truncated": false
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-24 01:45:48.069000+08:00",
+      "type": "ChoiceStateExited",
+      "id": 8,
+      "previousEventId": 7,
+      "stateExitedEventDetails": {
+        "name": "IsNewOrder",
+        "output": "{\"order_id\":\"order-001\",\"sku\":\"product-001\",\"quantity\":2,\"amount_minor\":12500,\"currency\":\"HKD\",\"payment_method_id\":\"pm_card_visa\",\"order\":{\"order_id\":\"order-001\",\"sku\":\"product-001\",\"quantity\":2,\"amount_minor\":12500,\"currency\":\"HKD\",\"status\":\"PENDING\"}}",
+        "outputDetails": {
+          "truncated": false
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-24 01:45:48.069000+08:00",
+      "type": "TaskStateEntered",
+      "id": 9,
+      "previousEventId": 8,
+      "stateEnteredEventDetails": {
+        "name": "AwaitMerchantApproval",
+        "input": "{\"order_id\":\"order-001\",\"sku\":\"product-001\",\"quantity\":2,\"amount_minor\":12500,\"currency\":\"HKD\",\"payment_method_id\":\"pm_card_visa\",\"order\":{\"order_id\":\"order-001\",\"sku\":\"product-001\",\"quantity\":2,\"amount_minor\":12500,\"currency\":\"HKD\",\"status\":\"PENDING\"}}",
+        "inputDetails": {
+          "truncated": false
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-24 01:45:48.069000+08:00",
+      "type": "TaskScheduled",
+      "id": 10,
+      "previousEventId": 9,
+      "taskScheduledEventDetails": {
+        "resourceType": "sqs",
+        "resource": "sendMessage.waitForTaskToken",
+        "region": "ap-east-1",
+        "parameters": "{\"QueueUrl\":\"http://floci-demo-faa1ca4aae5a:4566/000000000000/approval-17641ff0d07a422c93ca608181b39af0\",\"MessageBody\":{\"order_id\":\"order-001\",\"sku\":\"product-001\",\"quantity\":2,\"amount_minor\":12500,\"currency\":\"HKD\",\"task_token\":\"4f506fc7-b850-41c4-83a9-54cbf3d9a763\"}}",
+        "timeoutInSeconds": 1
+      }
+    },
+    {
+      "timestamp": "2026-10-24 01:45:48.069000+08:00",
+      "type": "TaskStarted",
+      "id": 11,
+      "previousEventId": 10,
+      "taskStartedEventDetails": {
+        "resourceType": "sqs",
+        "resource": "sendMessage.waitForTaskToken"
+      }
+    },
+    {
+      "timestamp": "2026-10-24 01:45:49.078000+08:00",
+      "type": "TaskTimedOut",
+      "id": 12,
+      "previousEventId": 11,
+      "taskTimedOutEventDetails": {
+        "resourceType": "sqs",
+        "resource": "sendMessage.waitForTaskToken",
+        "error": "States.Timeout"
+      }
+    },
+    {
+      "timestamp": "2026-10-24 01:45:49.078000+08:00",
+      "type": "TaskStateExited",
+      "id": 13,
+      "previousEventId": 12,
+      "stateExitedEventDetails": {
+        "name": "AwaitMerchantApproval",
+        "output": "{\"order_id\":\"order-001\",\"sku\":\"product-001\",\"quantity\":2,\"amount_minor\":12500,\"currency\":\"HKD\",\"payment_method_id\":\"pm_card_visa\",\"order\":{\"order_id\":\"order-001\",\"sku\":\"product-001\",\"quantity\":2,\"amount_minor\":12500,\"currency\":\"HKD\",\"status\":\"PENDING\"}}",
+        "outputDetails": {
+          "truncated": false
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-24 01:45:49.078000+08:00",
+      "type": "TaskStateEntered",
+      "id": 14,
+      "previousEventId": 13,
+      "stateEnteredEventDetails": {
+        "name": "CancelUnpaidOrder",
+        "input": "{\"order_id\":\"order-001\",\"sku\":\"product-001\",\"quantity\":2,\"amount_minor\":12500,\"currency\":\"HKD\",\"payment_method_id\":\"pm_card_visa\",\"order\":{\"order_id\":\"order-001\",\"sku\":\"product-001\",\"quantity\":2,\"amount_minor\":12500,\"currency\":\"HKD\",\"status\":\"PENDING\"}}",
+        "inputDetails": {
+          "truncated": false
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-24 01:45:49.078000+08:00",
+      "type": "LambdaFunctionScheduled",
+      "id": 15,
+      "previousEventId": 14,
+      "lambdaFunctionScheduledEventDetails": {
+        "resource": "arn:aws:lambda:ap-east-1:000000000000:function:orders-1844416e69114dde99c4d7c8eaf819e8",
+        "input": "{\"action\":\"cancel_unpaid_order\",\"order\":{\"order_id\":\"order-001\",\"sku\":\"product-001\",\"quantity\":2,\"amount_minor\":12500,\"currency\":\"HKD\",\"status\":\"PENDING\"}}",
+        "inputDetails": {
+          "truncated": false
+        },
+        "timeoutInSeconds": 30
+      }
+    },
+    {
+      "timestamp": "2026-10-24 01:45:49.078000+08:00",
+      "type": "LambdaFunctionStarted",
+      "id": 16,
+      "previousEventId": 15
+    },
+    {
+      "timestamp": "2026-10-24 01:45:49.127000+08:00",
+      "type": "LambdaFunctionSucceeded",
+      "id": 17,
+      "previousEventId": 16,
+      "lambdaFunctionSucceededEventDetails": {
+        "output": "{\"order_id\":\"order-001\",\"sku\":\"product-001\",\"quantity\":2,\"amount_minor\":12500,\"currency\":\"HKD\",\"status\":\"CANCELLED\"}",
+        "outputDetails": {
+          "truncated": false
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-24 01:45:49.127000+08:00",
+      "type": "TaskStateExited",
+      "id": 18,
+      "previousEventId": 17,
+      "stateExitedEventDetails": {
+        "name": "CancelUnpaidOrder",
+        "output": "{\"order_id\":\"order-001\",\"sku\":\"product-001\",\"quantity\":2,\"amount_minor\":12500,\"currency\":\"HKD\",\"status\":\"CANCELLED\"}",
+        "outputDetails": {
+          "truncated": false
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-24 01:45:49.127000+08:00",
+      "type": "ExecutionSucceeded",
+      "id": 19,
+      "previousEventId": 18,
+      "executionSucceededEventDetails": {
+        "output": "{\"order_id\":\"order-001\",\"sku\":\"product-001\",\"quantity\":2,\"amount_minor\":12500,\"currency\":\"HKD\",\"status\":\"CANCELLED\"}",
+        "outputDetails": {
+          "truncated": false
+        }
+      }
+    }
+  ],
+  "order": {
+    "order_id": {
+      "S": "order-001"
+    },
+    "sku": {
+      "S": "product-001"
+    },
+    "quantity": {
+      "N": "2"
+    },
+    "amount_minor": {
+      "N": "12500"
+    },
+    "currency": {
+      "S": "HKD"
+    },
+    "status": {
+      "S": "CANCELLED"
+    }
+  },
+  "stock": {
+    "Item": {
+      "sku": {
+        "S": "product-001"
+      },
+      "available": {
+        "N": "10"
+      }
+    },
+    "ResponseMetadata": {
+      "RequestId": "25046465-cc80-476e-aba0-ec7757d2281b",
+      "HTTPStatusCode": 200,
+      "HTTPHeaders": {
+        "content-length": "59",
+        "content-type": "application/x-amz-json-1.0",
+        "date": "Fri, 23 Oct 2026 17:45:49 GMT",
+        "x-amz-crc32": "4212941783",
+        "x-amz-id-2": "25046465-cc80-476e-aba0-ec7757d2281b",
+        "x-amz-request-id": "25046465-cc80-476e-aba0-ec7757d2281b",
+        "x-amzn-requestid": "25046465-cc80-476e-aba0-ec7757d2281b"
+      },
+      "RetryAttempts": 0
+    }
+  },
+  "ledger": {
+    "payment_intents": [],
+    "charges": [],
+    "refunds": []
+  }
+}

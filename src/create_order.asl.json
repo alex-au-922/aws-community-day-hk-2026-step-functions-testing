@@ -1,0 +1,153 @@
+{
+  "Comment": "Wait for merchant approval, reserve stock, then charge once. Unknown payment outcomes require reconciliation; only definite rejection releases stock.",
+  "QueryLanguage": "JSONPath",
+  "StartAt": "CreateOrder",
+  "States": {
+    "CreateOrder": {
+      "Type": "Task",
+      "Resource": "${OrdersFunctionArn}",
+      "TimeoutSeconds": 30,
+      "Parameters": {
+        "action": "create_order",
+        "order_id.$": "$.order_id",
+        "sku.$": "$.sku",
+        "quantity.$": "$.quantity",
+        "amount_minor.$": "$.amount_minor",
+        "currency.$": "$.currency"
+      },
+      "Retry": [{
+        "ErrorEquals": ["Lambda.ClientExecutionTimeoutException", "Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException", "InternalServerError", "ProvisionedThroughputExceededException", "TransactionInProgressException"],
+        "IntervalSeconds": 1,
+        "BackoffRate": 2,
+        "MaxAttempts": 3
+      }],
+      "ResultPath": "$.order",
+      "Next": "IsNewOrder"
+    },
+    "IsNewOrder": {
+      "Type": "Choice",
+      "Choices": [
+        {"Variable": "$.order.status", "StringEquals": "PENDING", "Next": "AwaitMerchantApproval"}
+      ],
+      "Default": "ReturnExistingOrder"
+    },
+    "ReturnExistingOrder": {
+      "Type": "Pass",
+      "OutputPath": "$.order",
+      "End": true
+    },
+    "AwaitMerchantApproval": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sqs:sendMessage.waitForTaskToken",
+      "TimeoutSeconds": 300,
+      "Parameters": {
+        "QueueUrl": "${MerchantQueueUrl}",
+        "MessageBody": {
+          "order_id.$": "$.order.order_id",
+          "sku.$": "$.order.sku",
+          "quantity.$": "$.order.quantity",
+          "amount_minor.$": "$.order.amount_minor",
+          "currency.$": "$.order.currency",
+          "task_token.$": "$$.Task.Token"
+        }
+      },
+      "ResultPath": null,
+      "Catch": [{
+        "ErrorEquals": ["MerchantRejected", "States.Timeout"],
+        "ResultPath": null,
+        "Next": "CancelUnpaidOrder"
+      }],
+      "Next": "ReserveStock"
+    },
+    "ReserveStock": {
+      "Type": "Task",
+      "Resource": "${OrdersFunctionArn}",
+      "TimeoutSeconds": 30,
+      "Parameters": {
+        "action": "reserve_stock",
+        "order.$": "$.order"
+      },
+      "ResultPath": "$.order",
+      "Retry": [{
+        "ErrorEquals": ["Lambda.ClientExecutionTimeoutException", "Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException", "InternalServerError", "ProvisionedThroughputExceededException", "TransactionInProgressException"],
+        "IntervalSeconds": 1,
+        "BackoffRate": 2,
+        "MaxAttempts": 3
+      }],
+      "Catch": [{
+        "ErrorEquals": ["OutOfStock"],
+        "ResultPath": null,
+        "Next": "CancelUnpaidOrder"
+      }],
+      "Next": "ChargePayment"
+    },
+    "ChargePayment": {
+      "Type": "Task",
+      "Resource": "${PaymentsFunctionArn}",
+      "TimeoutSeconds": 30,
+      "Parameters": {
+        "action": "charge",
+        "order_id.$": "$.order.order_id",
+        "amount_minor.$": "$.order.amount_minor",
+        "currency.$": "$.order.currency",
+        "payment_method_id.$": "$.payment_method_id"
+      },
+      "ResultPath": "$.payment",
+      "Catch": [{
+        "ErrorEquals": ["PaymentRejected"],
+        "ResultPath": null,
+        "Next": "ReleaseStock"
+      }],
+      "Next": "ConfirmOrder"
+    },
+    "ConfirmOrder": {
+      "Type": "Task",
+      "Resource": "${OrdersFunctionArn}",
+      "TimeoutSeconds": 30,
+      "Parameters": {
+        "action": "confirm_order",
+        "order.$": "$.order",
+        "payment_id.$": "$.payment.payment_id"
+      },
+      "Retry": [{
+        "ErrorEquals": ["Lambda.ClientExecutionTimeoutException", "Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException", "InternalServerError", "ProvisionedThroughputExceededException", "TransactionInProgressException"],
+        "IntervalSeconds": 1,
+        "BackoffRate": 2,
+        "MaxAttempts": 3
+      }],
+      "End": true
+    },
+    "CancelUnpaidOrder": {
+      "Type": "Task",
+      "Resource": "${OrdersFunctionArn}",
+      "TimeoutSeconds": 30,
+      "Parameters": {
+        "action": "cancel_unpaid_order",
+        "order.$": "$.order"
+      },
+      "Retry": [{
+        "ErrorEquals": ["Lambda.ClientExecutionTimeoutException", "Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException", "InternalServerError", "ProvisionedThroughputExceededException", "TransactionInProgressException"],
+        "IntervalSeconds": 1,
+        "BackoffRate": 2,
+        "MaxAttempts": 3
+      }],
+      "End": true
+    },
+    "ReleaseStock": {
+      "Type": "Task",
+      "Resource": "${OrdersFunctionArn}",
+      "TimeoutSeconds": 30,
+      "Parameters": {
+        "action": "release_stock",
+        "order.$": "$.order"
+      },
+      "Retry": [{
+        "ErrorEquals": ["Lambda.ClientExecutionTimeoutException", "Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException", "InternalServerError", "ProvisionedThroughputExceededException", "TransactionInProgressException"],
+        "IntervalSeconds": 1,
+        "BackoffRate": 2,
+        "MaxAttempts": 3
+      }],
+      "End": true
+    }
+  }
+}

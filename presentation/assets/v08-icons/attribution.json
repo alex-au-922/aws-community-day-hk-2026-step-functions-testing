@@ -1,0 +1,18 @@
+{
+  "sourceUrl": "https://raw.githubusercontent.com/floci-io/floci/main/docs/assets/floci.svg",
+  "sourcePage": "https://github.com/floci-io/floci/blob/main/docs/assets/floci.svg",
+  "apiInventory": "https://api.github.com/repos/floci-io/floci/contents/docs/assets?ref=main",
+  "sourceGitBlobSha1": "1b2e626d6792bdbd194d6d4f4bdacb1576ce9f99",
+  "sourceSha256": "b702915cd6b75d14f29eae8bf684bccbec580dea435db0d5c232b5ac45e4611e",
+  "sourceBytes": 2477,
+  "pngSha256": "4a0b3e41438813b4b82e222d29e58f1ac5e3ae5b20d80cb427bdd59111b47a2b",
+  "pngWidth": 1594,
+  "pngHeight": 471,
+  "downloadedAt": "2026-10-23T03:39:17.854Z",
+  "modifications": "None. Official original static SVG preserved byte-for-byte; rasterized with rsvg-convert, light color scheme, transparent background.",
+  "diagnosis": "Previous floci-black.svg is an animated build sequence. A static SVG renderer captured its initial outline guide state and omitted the filled wordmark and orange dots.",
+  "appearance": "Official dark filled wordmark and cloud outline with orange accent dots. No redraw or recoloring.",
+  "renderCommand": "rsvg-convert -w 1594 -o floci-black.png floci.source.svg",
+  "previousSource": "https://raw.githubusercontent.com/floci-io/floci/main/docs/assets/floci-black.svg",
+  "unusedAlternative": "floci-header.source.svg is the official white header variant, retained for reference only."
+}

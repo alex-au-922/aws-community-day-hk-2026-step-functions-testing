@@ -1,0 +1,51 @@
+min_version = "2026.6.14"
+
+[tools]
+python = "3.14"
+uv = "0.9.2"
+
+[env]
+UV_PYTHON = "3.14"
+
+[tasks.default]
+description = "Run the black-box suite and enforce complete production coverage"
+depends = ["test"]
+
+[tasks.init]
+description = "Install locked production, testing, and source-checking dependencies"
+run = "uv sync --frozen"
+
+[tasks.check]
+description = "Check Python types, lint, formatting, and workflow JSON syntax"
+run = [
+  "uv run --frozen ruff check src tests",
+  "uv run --frozen ruff format --check src tests",
+  "uv run --frozen pyright",
+  "python -m json.tool src/create_order.asl.json /dev/null",
+  "python -m json.tool src/cancel_order.asl.json /dev/null",
+]
+
+[tasks.format]
+description = "Format production and test Python source"
+run = [
+  "uv run --frozen ruff check --select I --fix src tests",
+  "uv run --frozen ruff format src tests",
+]
+
+[tasks.test]
+description = "Run real Floci workflows, combine container coverage, and require 100%"
+usage = 'arg "[pytest_args]" var=#true double_dash="automatic"'
+run = '''
+set -eu
+eval "set -- ${usage_pytest_args:-}"
+rm -f output/coverage.json output/junit.xml
+uv run --frozen pytest "$@"
+uv run --frozen coverage combine
+uv run --frozen coverage html --fail-under=0
+uv run --frozen coverage json --fail-under=0
+uv run --frozen coverage report --fail-under="${COVERAGE_FAIL_UNDER:-100}"
+'''
+
+[tasks.doctor]
+description = "Check Python, dependencies, and Docker"
+run = ["python --version", "uv --version", "docker version"]

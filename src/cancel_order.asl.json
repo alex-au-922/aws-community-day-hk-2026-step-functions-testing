@@ -1,0 +1,65 @@
+{
+  "Comment": "Refund a confirmed order once, then atomically record cancellation and release stock. Unknown refund outcomes require reconciliation.",
+  "QueryLanguage": "JSONPath",
+  "StartAt": "GetOrder",
+  "States": {
+    "GetOrder": {
+      "Type": "Task",
+      "Resource": "${OrdersFunctionArn}",
+      "TimeoutSeconds": 30,
+      "Parameters": {
+        "action": "get_order",
+        "order_id.$": "$.order_id"
+      },
+      "Retry": [{
+        "ErrorEquals": ["Lambda.ClientExecutionTimeoutException", "Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException", "InternalServerError", "ProvisionedThroughputExceededException", "TransactionInProgressException"],
+        "IntervalSeconds": 1,
+        "BackoffRate": 2,
+        "MaxAttempts": 3
+      }],
+      "ResultPath": "$.order",
+      "Next": "IsOrderCancelled"
+    },
+    "IsOrderCancelled": {
+      "Type": "Choice",
+      "Choices": [
+        {"Variable": "$.order.status", "StringEquals": "CANCELLED", "Next": "ReturnExistingOrder"}
+      ],
+      "Default": "RefundPayment"
+    },
+    "ReturnExistingOrder": {
+      "Type": "Pass",
+      "OutputPath": "$.order",
+      "End": true
+    },
+    "RefundPayment": {
+      "Type": "Task",
+      "Resource": "${PaymentsFunctionArn}",
+      "TimeoutSeconds": 30,
+      "Parameters": {
+        "action": "refund",
+        "order_id.$": "$.order.order_id",
+        "payment_id.$": "$.order.payment_id"
+      },
+      "ResultPath": "$.refund",
+      "Next": "RecordRefund"
+    },
+    "RecordRefund": {
+      "Type": "Task",
+      "Resource": "${OrdersFunctionArn}",
+      "TimeoutSeconds": 30,
+      "Parameters": {
+        "action": "record_refund",
+        "order.$": "$.order",
+        "refund_id.$": "$.refund.refund_id"
+      },
+      "Retry": [{
+        "ErrorEquals": ["Lambda.ClientExecutionTimeoutException", "Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException", "InternalServerError", "ProvisionedThroughputExceededException", "TransactionInProgressException"],
+        "IntervalSeconds": 1,
+        "BackoffRate": 2,
+        "MaxAttempts": 3
+      }],
+      "End": true
+    }
+  }
+}
