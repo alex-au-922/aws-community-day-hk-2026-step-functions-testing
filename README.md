@@ -1,98 +1,140 @@
-# Testing Step Functions locally with Floci
+# Testing Python workflows with Floci
 
-An AWS Community Day Hong Kong talk by **Alex Au and Sky Ng**. The demo uses
-pytest to run merchant approval, stock reservation, payment and cancellation
-through real Step Functions workflows in Floci.
+An order workflow can finish successfully and still leave the wrong stock or
+payment records. This demo tests the business result across Step Functions,
+Lambda, SQS, DynamoDB and a payment API, including retries and lost payment replies.
+It runs locally in Docker, injects failures through HTTP, and connects Python
+coverage back to the pytest scenarios that exercised the code.
 
-## Slides and saved reports
+Presented by **Alex Au and Sky Ng** at **AWS Community Day Hong Kong,
+24 October 2026**.
 
-- [PowerPoint](presentation/output/testing-python-workflows-with-floci.pptx), including the MiniStack / Durable Functions bonus
-- [PDF for sharing](presentation/output/testing-python-workflows-with-floci.pdf)
-- [English speaker script](presentation/output/testing-python-workflows-with-floci-speaker-script.txt): Sky presents sections 1–3; Alex presents sections 4–7 and the bonus.
-- [Full-suite HTML coverage report](presentation/assets/demo-report-v39/index.html)
-- [Single stock-retry test HTML coverage report](presentation/assets/demo-report-stock-retry-v39/index.html)
-- [Editable architecture slide](presentation/output/aws-workflow-architecture-single-slide.pptx)
+**[Download the slides (PPTX)](https://raw.githubusercontent.com/alex-au-922/aws-community-day-hk-2026-step-functions-testing/main/presentation/output/testing-python-workflows-with-floci.pptx)**
+· **[Read the slides (PDF)](https://raw.githubusercontent.com/alex-au-922/aws-community-day-hk-2026-step-functions-testing/main/presentation/output/testing-python-workflows-with-floci.pdf)**
 
-Download or clone the repository to open the HTML reports with their supporting
-files. The saved full-suite run passed **36 tests**, with **250/250 application
-statements and 30/30 branch outcomes** covered. The single-test report contains
-only `test_order_transaction_retry_recovers_before_payment`; it is intentionally
-partial coverage.
+The shared deck has **48 slides**: the original 40-slide talk and an expanded
+eight-slide MiniStack / Durable Functions bonus added after the talk.
+The [English speaker script](presentation/output/testing-python-workflows-with-floci-speaker-script.txt)
+and [editable architecture slide](presentation/output/aws-workflow-architecture-single-slide.pptx)
+are also included.
 
 ## Run the demo
 
-Requires [mise](https://mise.jdx.dev/) and a running Docker daemon. Run these
-commands from the repository root:
+Requires [mise](https://mise.jdx.dev/) and a running Docker daemon. The fixtures
+start the local services and Lambda containers; no AWS account is needed.
+The mise configuration selects Python 3.14 and the locked uv version.
 
 ```sh
+git clone https://github.com/alex-au-922/aws-community-day-hk-2026-step-functions-testing.git
+cd aws-community-day-hk-2026-step-functions-testing
+mise trust
+mise install
 mise run init
 mise run check
-
-# Full suite: requires 100% application statement and branch coverage.
-mise run test
-open output/htmlcov/index.html
 ```
 
-For the stock-retry demo, run exactly one test and generate its own report:
+Run the stock-retry example shown in the talk:
 
 ```sh
 COVERAGE_FAIL_UNDER=0 mise run test -- \
   tests/test_workflows/test_stock_reservation.py::test_order_transaction_retry_recovers_before_payment
-open output/htmlcov/index.html
 ```
 
-Each test run replaces the generated report under `output/`. The two saved
-reports under `presentation/assets/` remain available as offline fallbacks.
+The test injects two failed stock transactions, then checks recovery before
+payment. It asserts workflow history, confirmed order, stock of eight and exactly
+one charge. `COVERAGE_FAIL_UNDER=0` allows this single scenario's partial coverage.
 
-To show the fault injection and workflow configuration in Zed:
+Run the full suite to enforce **100% application statement and branch coverage**:
 
 ```sh
-open -a Zed \
-  tests/test_workflows/test_stock_reservation.py \
-  src/create_order.asl.json
+mise run test
 ```
 
-## Workflow and test boundary
+Open `output/htmlcov/index.html` in a browser (`open output/htmlcov/index.html`
+on macOS). Expand a covered line's context to see its test function name, then
+read that test's assertions. Each run replaces the generated coverage report;
+the single-test and full-suite reports are not cumulative.
+
+## What the workflow checks
 
 Create: **create order → merchant accepts → reserve stock → charge → confirm**.
+Starting with ten units and ordering two should leave stock of eight and one
+charge.
 
 Merchant rejection, approval timeout or insufficient stock cancels the unpaid
-order. A definitive payment rejection releases the reserved stock. An uncertain
+order. A definitive payment rejection releases the reservation. An uncertain
 payment outcome fails the workflow while retaining the reservation for
-reconciliation.
+reconciliation; it does not automatically retry the charge.
 
 Cancel: **read confirmed order → refund → record cancellation and restore stock**.
+An uncertain refund also requires verification before another attempt.
 
 Orders and Payments are separate Lambda components. Orders owns DynamoDB order
 and stock records; Payments owns payment HTTP calls and error classification.
 The merchant receives approval requests through SQS and resumes the waiting
 workflow with `SendTaskSuccess` and its task token.
 
-Tests deploy the checked-in ASL and original Lambda handlers to pinned Floci.
-They use service APIs to assert workflow history, order and stock records, and
-localstripe payment records. OpenResty injects HTTP errors through Lua; application
-SDK calls are not mocked. Coverage runs inside each Lambda container, tags line
-hits with `test_function_name`, and saves through `SIGUSR1` before teardown.
+## How the tests gather evidence
 
-Local tests exercise workflow behaviour, including rejection, retries and lost
-payment replies. The pinned localstripe does **not** implement `Idempotency-Key`,
-so these tests do not prove Stripe's idempotency behaviour. The workflows do not
-automatically retry uncertain charges or refunds. AWS permissions and real-service
-contracts require separate validation.
+Tests deploy the checked-in ASL and original Lambda handlers to **Floci 2.3.0**,
+pinned by Docker image digest. Testcontainers owns the services and teardown.
+Application SDK calls use local endpoints; OpenResty injects HTTP errors through
+test-owned Lua scripts. The tests do not import the application Python or mock
+its SDK calls.
+
+Workflow history checks transitions, errors and retry counts. Separate API reads
+check committed DynamoDB order and stock records and the localstripe payment
+ledger. Coverage runs inside the Lambda containers, records the test function
+name as its context, and saves through `SIGUSR1` before teardown.
+
+The saved baseline run passed **36 tests**, covering **250/250 Python application
+statements and 30/30 branch outcomes** under `src/`. This combines complete
+workflow tests and direct Lambda component integration tests. The coverage total
+does not measure ASL, test fixtures or the optional durable bonus, and execution
+coverage alone does not establish correctness.
+
+- [Saved full-suite HTML coverage report](presentation/assets/demo-report-v39/index.html)
+- [Saved stock-retry-only HTML coverage report](presentation/assets/demo-report-stock-retry-v39/index.html)
+
+Clone or download the repository to open these HTML reports with their supporting
+files. The stock-retry report is intentionally partial coverage. Fresh reports,
+test evidence and the virtual environment are ignored by Git.
+
+The pinned localstripe does **not** implement `Idempotency-Key`, so these tests
+do not prove Stripe's idempotency behaviour. Local emulator results also do not
+validate AWS permissions or every real-service contract. The signal-based
+coverage collection applies to this Docker environment.
+
+## Optional MiniStack / Durable Functions bonus
+
+The [bonus implementation](bonus/durable/README.md) expresses the creation flow
+with the official AWS Durable Execution SDK for Python. It reuses the order and
+payment clients and replaces Step Functions orchestration with checkpointed
+steps and a merchant SQS callback.
+
+```sh
+mise run check-durable
+mise run test-durable
+```
+
+These tasks select the optional `durable` dependency group and run separately
+from the baseline suite. **One test has passed** with real Docker Lambda
+containers on **MiniStack 1.5.32** and **SDK 2.1.0**. It observes suspension at
+merchant approval, sends the callback, and verifies that replay reuses completed
+order-creation and approval-submission checkpoints. The final records show a
+confirmed order, stock of eight and one charge.
+
+This bonus does not yet port rejection, retry, timeout, cancellation or
+compensation scenarios, test replay of a completed payment checkpoint, or collect
+durable-workflow coverage. It does not establish a global exactly-once guarantee.
+Its [README](bonus/durable/README.md) explains the interruption limits and
+MiniStack compatibility gaps. Results are written under `output/durable/` and do
+not replace the baseline coverage report.
+
+## Explore the implementation
 
 - [Application components](src/README.md)
 - [Workflow inputs and deployment settings](src/workflows.md)
 - [Create-order ASL](src/create_order.asl.json)
 - [Cancel-order ASL](src/cancel_order.asl.json)
 - [Fixtures, fault injection and coverage collection](tests/README.md)
-
-Generated test outputs and the local virtual environment are ignored by Git.
-
-## Durable Functions bonus
-
-The optional [MiniStack + Python Durable Functions implementation](bonus/durable/README.md)
-reuses the order and payment clients with checkpointed steps and a merchant SQS
-callback. Run `mise run check-durable` and `mise run test-durable` separately
-from the Step Functions suite. The first slice verifies suspension, callback
-resume and checkpoint reuse before payment, then checks the stored order,
-stock and localstripe ledger. Its README documents MiniStack compatibility gaps.
