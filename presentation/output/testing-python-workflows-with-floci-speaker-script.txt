@@ -1,7 +1,7 @@
 Testing Python Workflows with Floci
 English speaker script
 Sky Ng presents sections 1–3. Alex Au presents sections 4–7 and the optional bonus.
-Core talk timings retained; bonus slides are untimed.
+Core talk script retained; expanded post-talk bonus pages are untimed.
 
 Slide 1 | Sky Ng | 00:00–00:30
 
@@ -315,27 +315,47 @@ I would leave you with these three questions when reading a coverage result. Did
 Presenter cue: Point once to Coverage, Test context, and Assertions. Continue to the optional Durable Functions bonus before Q&A.
 
 
-Slide 39 | Alex Au | Optional bonus
-Bonus: Lambda Durable Functions
+Slide 39 | Alex Au | Post-talk bonus
+Lambda Durable Functions with MiniStack
 
-This is an additional implementation of the same successful order flow. The orchestration is Python rather than an ASL state machine. The AWS SDK provides durable steps and callback waits. The smaller example covers less: rejection, retry, cancellation and coverage collection have not been ported.
+This optional bonus expands the completed talk for readers. We express the same successful order flow with the official Lambda Durable Python SDK and run a real Docker Lambda callback/replay test on MiniStack. Start by mapping the earlier ASL states to Python operations, then show the local environment, callback exchange, saved results and observed evidence. The bonus does not port the original retry, compensation or Lambda coverage examples.
 
-Slide 40 | Alex Au | Optional bonus
-The approval wait is a Python call
+Slide 40 | Alex Au | Post-talk bonus
+The approval-success flow in Step Functions and Python
 
-This is the actual wait call from the implemented handler. request_approval sends an SQS message containing the order and callback ID. The wait suspends the first invocation. The test answers the callback as the merchant, and the execution resumes. Positive deadlines are explicit because MiniStack 1.5.32 interprets the SDK default zero differently from AWS. Scheduled submitter retries are disabled; that does not guarantee exactly-once message delivery if execution is interrupted before its checkpoint.
+These are the same successful order states from the original ASL workflow. Each business mutation becomes context.step; the merchant approval task becomes context.wait_for_callback. The source passes anonymous functions and explicit step names; the slide shows only the operation mapping. The SDK persists results and drives checkpoint/replay, which makes the orchestration look smaller. The scope is also smaller: this bonus does not port rejection, retry, cancellation, compensation or Lambda coverage. A shorter successful path is not evidence of full Step Functions feature parity.
 
-Slide 41 | Alex Au | Optional bonus
-The callback resumes a second invocation
+Slide 41 | Alex Au | Post-talk bonus
+MiniStack runs this durable workflow locally
 
-In the first invocation, creation and approval submission finish and are checkpointed. The execution suspends for the callback. The SDK replays from the beginning on the second invocation and reuses those stored results. Reserve, charge and confirm run after approval. The test reads paginated execution history plus DynamoDB and localstripe independently. The saved history contains two InvocationCompleted events, one CallbackSucceeded event, and each named step starts and succeeds once. This only proves replay of the completed creation and submission checkpoints; there is no post-payment suspension, so completed payment replay is not tested.
+The original suite uses Floci for Step Functions. This separate bonus uses MiniStack 1.5.32 to exercise Lambda Durable execution APIs, SQS and DynamoDB. Testcontainers starts the emulator and a separate localstripe container. MiniStack invokes the official AWS Python Lambda container with the official Durable SDK 2.1.0; strict Docker mode prevents host-execution fallback. pytest starts the published function and sends the callback through public APIs. The handler uses the same order and payment clients with configured local endpoints. MiniStack is not an extra production component; it is the local service environment for this test. Compatibility gaps are documented in bonus/durable/README.md: an Enabled wire extension is required, callback deadlines must be positive, synchronous invocation returns PENDING, and resume selects $LATEST. The function is unchanged after publication in this test.
 
-Slide 42 | Alex Au | Optional bonus
-Demo: run the callback/replay test
+Slide 42 | Alex Au | Post-talk bonus
+The test answers the approval callback
 
-Run these commands from the repository root with mise and Docker running. check-durable runs formatting, lint and strict type checks. test-durable builds the Lambda image, starts isolated MiniStack and localstripe containers, deploys a published function version, performs the real callback/replay test, writes evidence, and tears its resources down. MiniStack has documented compatibility gaps: it needs an Enabled wire extension; synchronous invoke returns PENDING at suspension; resume selects $LATEST. This local example keeps code and configuration unchanged after publication. The bonus does not yet collect Lambda coverage, so the earlier 100% coverage figures describe only the original Step Functions application.
+The wait call asks request_approval to submit the order and the callback ID through SQS. The first invocation then suspends. In this local test there is no deployed merchant worker: pytest reads that SQS message and acts as the merchant. It calls lambda_client.send_durable_execution_callback_success(CallbackId=callback_id, Result=b"{}"). The same callback ID selects the waiting task and the workflow resumes in another invocation. The code excerpt omits the explicit timeout, heartbeat timeout and retry configuration; the full source remains in workflow.py.
 
-Slide 43 | Alex Au | 27:40–29:40
+Slide 43 | Alex Au | Post-talk bonus
+The callback ID selects the waiting execution
+
+The SQS message body contains the order and callback ID. The test decodes the body, extracts callback_id, and passes the same value to send_durable_execution_callback_success, with an empty JSON success result. The callback selects the existing durable execution and its waiting task. MiniStack schedules its next Lambda invocation; this is a resumed execution rather than another new order. On replay, the SDK loads the checkpoints belonging to that execution. The displayed JSON decoding omits the source typing cast; runtime behaviour is identical.
+
+Slide 44 | Alex Au | Post-talk bonus
+Replay returns saved results instead of repeating work
+
+A completed context.step is a saved result, not just a marker saying some code was visited. CreateOrder saves the returned order record. The wait helper also checkpoints that its approval-submission callback completed. After approval resumes execution, the handler is replayed from the beginning; the SDK returns that stored order and completed-submission result instead of making those external calls again. The later reserve, charge and confirm steps then run. This is checkpoint reuse of already completed steps. The SDK callback submitter still has at-least-once-per-retry semantics if interrupted before its checkpoint, and the test does not exercise replay after payment or every crash boundary.
+
+Slide 45 | Alex Au | Post-talk bonus
+The test checks replay and the stored business result
+
+These counts come from the saved local run, rather than a hypothetical example. There are two completed invocations and one callback-success event. The test reads paginated native history and asserts the exact ordered step names separately for StepStarted and StepSucceeded; the two earlier completed steps appear once even though the handler replayed. It also reads DynamoDB and the localstripe ledger independently, so it checks the business result rather than accepting a successful execution status alone. Before callback the order was PENDING, stock was 10 and there were no charges. After callback the order is CONFIRMED, stock is 8, there is exactly one payment intent and charge, and there are no refunds. This run proves completed-checkpoint reuse across merchant approval. It does not prove globally exactly-once side effects, crash-safe single SQS delivery, full AWS compatibility, or bonus coverage.
+
+Slide 46 | Alex Au | Post-talk bonus
+Demo: approval resumes the workflow
+
+Run mise run test-durable from the repository root with mise and Docker running. The test deploys a published function version, starts the workflow, receives SQS approval, answers the durable callback as the merchant, reads paginated history and independently reads DynamoDB and the payment ledger, then saves output/durable/merchant-callback.json and removes its resources. The expected result is two invocations, one callback success, earlier completed steps started once, CONFIRMED, stock 8 and one charge. The full handler and assertions can be opened in Zed for a source walkthrough. check-durable remains available separately for formatting, lint and strict type checks.
+
+Slide 47 | Alex Au | 27:40–29:40
 Q&A
 
 Thank you. What would you like us to go through in more detail? Sky and I are happy to take questions.
@@ -343,7 +363,7 @@ Thank you. What would you like us to go through in more detail? Sky and I are ha
 Presenter cue: Allow time for Q&A. Sky can join the discussion; Alex hosts this slide.
 
 
-Slide 44 | Alex Au | 29:40–30:00
+Slide 48 | Alex Au | 29:40–30:00
 PyCon Hong Kong 2026
 
 And if you would like to continue the Python conversation, we hope to see you at PyCon Hong Kong on the fourteenth and fifteenth of November. Thank you for joining us today.
