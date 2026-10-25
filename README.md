@@ -6,8 +6,9 @@ through real Step Functions workflows in Floci.
 
 ## Slides and saved reports
 
-- [PowerPoint v39](presentation/output/floci-sky-alex-v39.pptx)
-- [English speaker script](presentation/output/floci-sky-alex-v39-speaker-script.txt): Sky presents sections 1–3; Alex presents sections 4–7.
+- [PowerPoint](presentation/output/testing-python-workflows-with-floci.pptx), including the MiniStack / Durable Functions bonus
+- [PDF for sharing](presentation/output/testing-python-workflows-with-floci.pdf)
+- [English speaker script](presentation/output/testing-python-workflows-with-floci-speaker-script.txt): Sky presents sections 1–3; Alex presents sections 4–7 and the bonus.
 - [Full-suite HTML coverage report](presentation/assets/demo-report-v39/index.html)
 - [Single stock-retry test HTML coverage report](presentation/assets/demo-report-stock-retry-v39/index.html)
 - [Editable architecture slide](presentation/output/aws-workflow-architecture-single-slide.pptx)
