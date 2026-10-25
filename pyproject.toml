@@ -13,6 +13,9 @@ dependencies = [
 [tool.uv]
 package = false
 
+[tool.uv.dependency-groups]
+durable = {requires-python = ">=3.11"}
+
 [tool.pyright]
 typeCheckingMode = "strict"
 pythonVersion = "3.10"
@@ -65,4 +68,7 @@ dev = [
 ]
 runtime = [
     "coverage>=7.16.2,<8",
+]
+durable = [
+    "aws-durable-execution-sdk-python==2.1.0",
 ]

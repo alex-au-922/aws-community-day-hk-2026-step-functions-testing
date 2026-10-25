@@ -30,6 +30,18 @@ wheels = [
 ]
 
 [[package]]
+name = "aws-durable-execution-sdk-python"
+version = "2.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "boto3", marker = "python_full_version >= '3.11'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1b/13/095b1c5fa5cecfad1e7fba906562184935b3c4c598a403261a0f0c082137/aws_durable_execution_sdk_python-2.1.0.tar.gz", hash = "sha256:74e56ab587defc7b98b674fe3b5f8c46500b74e3941719caca5b76c57800d844", size = 353818, upload-time = "2026-10-21T22:35:34.307Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e2/b9/86b5c546b21940f953ca5e97035e73b5cf067f6fba605fffb2d88c935bd3/aws_durable_execution_sdk_python-2.1.0-py3-none-any.whl", hash = "sha256:485f235454cb9408c7da04fab34dbe48ba03d3d5617bc5e86601be8ed6128d9d", size = 141274, upload-time = "2026-10-21T22:35:32.672Z" },
+]
+
+[[package]]
 name = "aws-lambda-powertools"
 version = "3.36.0"
 source = { registry = "https://pypi.org/simple" }
@@ -952,6 +964,9 @@ dev = [
     { name = "testcontainers" },
     { name = "types-docker" },
 ]
+durable = [
+    { name = "aws-durable-execution-sdk-python", marker = "python_full_version >= '3.11'" },
+]
 runtime = [
     { name = "coverage" },
 ]
@@ -974,6 +989,7 @@ dev = [
     { name = "testcontainers", specifier = ">=4,<5" },
     { name = "types-docker", specifier = ">=7,<8" },
 ]
+durable = [{ name = "aws-durable-execution-sdk-python", marker = "python_full_version >= '3.11'", specifier = "==2.1.0" }]
 runtime = [{ name = "coverage", specifier = ">=7.16.2,<8" }]
 
 [[package]]

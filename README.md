@@ -86,3 +86,12 @@ contracts require separate validation.
 - [Fixtures, fault injection and coverage collection](tests/README.md)
 
 Generated test outputs and the local virtual environment are ignored by Git.
+
+## Durable Functions bonus
+
+The optional [MiniStack + Python Durable Functions implementation](bonus/durable/README.md)
+reuses the order and payment clients with checkpointed steps and a merchant SQS
+callback. Run `mise run check-durable` and `mise run test-durable` separately
+from the Step Functions suite. The first slice verifies suspension, callback
+resume and checkpoint reuse before payment, then checks the stored order,
+stock and localstripe ledger. Its README documents MiniStack compatibility gaps.

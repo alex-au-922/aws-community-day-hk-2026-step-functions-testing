@@ -49,3 +49,19 @@ uv run --frozen coverage report --fail-under="${COVERAGE_FAIL_UNDER:-100}"
 [tasks.doctor]
 description = "Check Python, dependencies, and Docker"
 run = ["python --version", "uv --version", "docker version"]
+
+[tasks.test-durable]
+description = "Run the isolated MiniStack Durable Functions callback/replay proof"
+run = '''
+set -eu
+rm -rf output/durable
+uv run --frozen --group durable pytest bonus/durable/tests --junitxml=output/durable/junit.xml
+'''
+
+[tasks.check-durable]
+description = "Check optional Durable Functions Python source and tests"
+run = [
+  "uv run --frozen --group durable ruff check bonus",
+  "uv run --frozen --group durable ruff format --check bonus",
+  "uv run --frozen --group durable pyright --pythonversion 3.11 bonus",
+]
